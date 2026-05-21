@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="JKirk Orders">
+<title>JKirk Order Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #fff; color: #000; }
+  .selector-bar {
+    background: #f0f0f0; border-bottom: 2px solid #999;
+    padding: 10px 12px; position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .selector-bar label { font-weight: bold; font-size: 12px; white-space: nowrap; }
+  .selector-bar select {
+    flex: 1; font-size: 15px; padding: 6px 8px;
+    border: 1px solid #999; border-radius: 3px;
+    background: #fff; font-family: Arial, sans-serif;
+  }
+  #form-area { display: none; }
+  #form-area.visible { display: block; }
+  .info-block { padding: 8px 10px 4px; font-size: 10px; border-bottom: 1px solid #ccc; }
+  .info-block .address { margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { border: 1px solid #000; padding: 4px 5px; vertical-align: top; font-size: 9px; word-wrap: break-word; }
+  th { font-weight: bold; font-size: 9px; background: #fff; }
+  .col-code { width: 22%; } .col-desc { width: 38%; } .col-pack { width: 14%; }
+  .col-amt { width: 12%; } .col-req { width: 14%; }
+  .row-delivery td { background: #ffff00; font-weight: bold; font-size: 10px; }
+  .row-total td { font-size: 9px; background: #fff; }
+  .row-total .total-label { text-align: right; padding-right: 4px; }
+  .row-total .total-val { font-weight: bold; }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; border: none; background: transparent;
+    font-family: Arial, sans-serif; font-size: 9px;
+    padding: 0; outline: none; -webkit-appearance: none; resize: none;
+  }
+  input[type="date"] { font-size: 11px; font-weight: bold; }
+  .amt-input { text-align: center; font-size: 11px; font-weight: bold; width: 100%; }
+  textarea { height: 28px; overflow: hidden; }
+  .special-req-box { height: 40px; }
+
+  /* Export button */
+  .export-bar {
+    padding: 12px;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+    text-align: center;
+  }
+  .export-btn {
+    background: #1a5276;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 32px;
+    font-size: 15px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    width: 100%;
+  }
+  .export-btn:active { background: #154360; }
+
+  /* Print styles — hides everything except the form table */
+  @media print {
+    .selector-bar, .export-bar, .hint { display: none !important; }
+    body { font-size: 10px; }
+    #form-area { display: block !important; }
+    input, textarea { border: none !important; background: transparent !important; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="selector-bar">
+  <label>Account:</label>
+  <select id="accountSelect">
+    <option value="">— Select Account —</option>
+    <option value="battalion">Battalion</option>
+    <option value="cordillera">The Clubs of Cordillera Ranch</option>
+    <option value="dough">Dough Pizzeria Hemisfair</option>
+    <option value="gather">Gather Brewing Company</option>
+    <option value="hotelemma">Hotel Emma</option>
+    <option value="katerina">Katerina LLC</option>
+    <option value="makos">Makos on the Creek</option>
+    <option value="mixtli">Mixtli</option>
+    <option value="petroleum">Petroleum Club of San Antonio</option>
+    <option value="stonelake">Roaring Fork Stonelake</option>
+    <option value="desert">The Desert Spoon</option>
+    <option value="faust">The Faust Hotel</option>
+    <option value="therock">The Rock</option>
+    <option value="tommy">Tommy Bahama Marlin Bar - La Cantera</option>
+  </select>
+</div>
+
+<div id="form-area">
+  <div class="info-block">
+    <div class="address">5566 Red Bird Center Dr. Dallas TX, 75237</div>
+    <div>Phone: 214-646-8135</div>
+  </div>
+  <table>
+    <tr>
+      <td class="col-code" style="font-weight:bold;">Customer #</td>
+      <td class="col-desc" colspan="2" style="font-weight:bold;" id="custNum"></td>
+      <td class="col-amt"></td><td class="col-req"></td>
+    </tr>
+    <tr>
+      <td style="font-weight:bold;">Customer #</td>
+      <td colspan="2" style="font-weight:bold;" id="custName"></td>
+      <td></td><td></td>
+    </tr>
+    <tr class="row-delivery">
+      <td style="font-weight:bold;">Delivery Date</td>
+      <td colspan="4"><input type="date" id="deliveryDate"></td>
+    </tr>
+    <tr><td colspan="5" style="border:none; height:4px;"></td></tr>
+    <tr>
+      <th class="col-code">Item Code:</th>
+      <th class="col-desc">Description:</th>
+      <th class="col-pack"></th>
+      <th class="col-amt">Order Amount:</th>
+      <th class="col-req">Special Requests</th>
+    </tr>
+    <tbody id="regularItems"></tbody>
+    <tr class="row-total">
+      <td></td><td></td>
+      <td class="total-label">Total Cases</td>
+      <td class="total-val" id="totalCases"></td>
+      <td></td>
+    </tr>
+    <tr><td colspan="5" style="border:none; height:6px;"></td></tr>
+    <tr><td colspan="5" style="font-weight:bold;">Special Order Requests</td></tr>
+    <tr><td colspan="5"><textarea class="special-req-box"></textarea></td></tr>
+  </table>
+
+  <div class="export-bar">
+    <button class="export-btn" onclick="window.print()">Export to PDF</button>
+  </div>
+</div>
+
+<script type="text/javascript">
+(function() {
+  var accounts = {
+    battalion: {
+      custNum: '9002245', custName: 'Battalion',
+      items: [
+        { code: '02018000-01-201', desc: 'ABA BEEF NY STRIPLOIN 0X1', pack: '2 PC 28# CS' },
+        { code: '02113613-01-201', desc: 'ABA GROUND BEEF CHUCK BULK', pack: '12# CS' },
+        { code: '14041500-01-201', desc: 'PORK TENDERLOIN', pack: '6 PKG 16# CS FRZ' },
+        { code: '14149618-01-201', desc: 'PORK GROUND', pack: '2PK 10# CS FRZ' },
+        { code: '01018900-01-201', desc: 'CH BEEF TENDERLOIN PSMO', pack: '12 PC 84# CS' },
+        { code: '22018000-01-201', desc: 'CH UP 2/3 ANGUS BEEF NY', pack: '5 PC 75# CS' },
+        { code: '11029601-01-201', desc: 'GROUND LAMB AUSTRALIAN', pack: '10# CS FRZ' },
+        { code: '14041218-01-201', desc: 'PORK LOIN B/IN CC 10 RIB RACK', pack: '6 PC 40# CS SEABOARD' }
+      ]
+    },
+    cordillera: {
+      custNum: '9001279', custName: 'The Clubs of Cordillera Ranch, LP',
+      items: [
+        { code: '04018900-01-201', desc: 'PR BEEF TENDERLOIN PSMO', pack: '12 PC 72# CS' },
+        { code: '04011201-01-201', desc: 'PR BEEF RIBEYE BNLS', pack: '4 PC 72# CS' },
+        { code: '04811202-16-201', desc: 'PR BEEF DA RIBEYE STK BNLS', pack: '12 PC 12# CS' }
+      ]
+    },
+    dough: {
+      custNum: '9002260', custName: 'Dough Pizzeria Hemisfair Convention Cent',
+      items: [
+        { code: '14040601-01-201', desc: 'PORK BUTT BNLS', pack: '4 PKG 76# CS' }
+      ]
+    },
+    gather: {
+      custNum: '9002232', custName: 'Gather Brewing Company',
+      items: [
+        { code: '03113603-01-201', desc: 'GROUND BEEF CHUCK BLEND', pack: '12# CS' }
+      ]
+    },
+    hotelemma: {
+      custNum: '9001327', custName: 'Hotel Emma',
+      items: [
+        { code: '02018901-01-201', desc: 'ABA BEEF TENDERLOIN PSMO', pack: '4 PC 28# CS' },
+        { code: '05113603-04-201', desc: 'WAGYU GROUND BEEF BLEND', pack: '12# CS ROSEWOOD FRZ' },
+        { code: '22013001-01-201', desc: 'CH UP 2/3 ANG BEEF CHUCK', pack: '75# CS' },
+        { code: '02118520-08-201', desc: 'ABA BEEF BAVETTE STK 8 OZ', pack: '24 PC 12# CS' }
+      ]
+    },
+    katerina: {
+      custNum: '9002948', custName: 'Katerina LLC',
+      items: [
+        { code: '04018000-01-201', desc: 'PR BEEF NY STRIPLOIN 0X1', pack: '5 PC 70# CS' },
+        { code: '14041202-01-201', desc: 'PORK LOIN CC 10 RIB RACK', pack: '8 PC 56# CS' },
+        { code: '04011201-01-201', desc: 'PR BEEF RIBEYE BNLS', pack: '4 PC 72# CS' }
+      ]
+    },
+    makos: {
+      custNum: '9002218', custName: 'Makos on the Creek',
+      items: [
+        { code: '02011203-01-201', desc: 'ABA BEEF RIBEYE BNLS', pack: '2 PC 38# CS' },
+        { code: '22018502-01-201', desc: 'CH UP 2/3 ANGUS BEEF SIRLOIN', pack: '4 PKG 56# CS' }
+      ]
+    },
+    mixtli: {
+      custNum: '9002230', custName: 'Mixtli',
+      items: [
+        { code: '13038804-01-201', desc: 'VEAL BONES KNUCKLE', pack: '50# CS FRZ' }
+      ]
+    },
+    petroleum: {
+      custNum: '9000942', custName: 'Petroleum Club of San Antonio',
+      items: [
+        { code: '02011203-01-201', desc: 'ABA BEEF RIBEYE BNLS', pack: '2 PC 38# CS' },
+        { code: '22011201-01-201', desc: 'CH UP 2/3 ANGUS BEEF RIBEYE', pack: '5 PC 80# CS' },
+        { code: '02018901-01-201', desc: 'ABA BEEF TENDERLOIN PSMO', pack: '4 PC 28# CS' }
+      ]
+    },
+    stonelake: {
+      custNum: '9001677', custName: 'Roaring Fork Stonelake',
+      items: [
+        { code: '03119002-08-201', desc: 'BC BEEF TENDERLOIN STK E/E 8 OZ', pack: '24 PC 12# CS', note: 'Bulk Pack 20/bag' },
+        { code: '22011201-01-201', desc: 'CH UP 2/3 ANGUS BEEF RIBEYE', pack: '5 PC 80# CS' },
+        { code: '02012000-01-201', desc: 'ABA BEEF BRISKET', pack: '5 PC 60# CS' },
+        { code: '02011203-01-201', desc: 'ABA BEEF RIBEYE BNLS', pack: '2 PC 38# CS' },
+        { code: '02018000-01-201', desc: 'ABA BEEF NY STRIPLOIN 0X1', pack: '2 PC 28# CS' }
+      ]
+    },
+    desert: {
+      custNum: '9002446', custName: 'The Desert Spoon',
+      items: [
+        { code: '05111401-08-201', desc: 'WAGYU BEEF FLAT IRON 8 OZ', pack: '24 PC 12# CS ROSEWOOD' },
+        { code: '14141217-14-201', desc: 'PORK RIB CHOP CC FRENCHED', pack: '14 PC 12.25# CS DUROC' },
+        { code: '99013400-50-201', desc: 'BEEF TALLOW BLOCK', pack: '50# CS' }
+      ]
+    },
+    faust: {
+      custNum: '9003135', custName: 'The Faust Hotel',
+      items: [
+        { code: '05011204-01-201', desc: 'WAGYU BEEF RIBEYE PREMIER', pack: '2 PC 34# CS ROSEWOOD' },
+        { code: '14141210-14-201', desc: 'PORK RIB CHOP TOMAHAWK 14', pack: '14 PC 12.25# CS' },
+        { code: '04110313-16-201', desc: 'PR BEEF RIB SPLIT BONE', pack: '12 PC 12# CS' }
+      ]
+    },
+    therock: {
+      custNum: '9002694', custName: 'The Rock',
+      items: [
+        { code: '02113613-08-201', desc: 'ABA GROUND BEEF CHUCK', pack: '12# CS' },
+        { code: '34053905-01-201', desc: 'BACON APPLEWOOD 10/12', pack: '15# CS VANDEROSE FRZ' },
+        { code: '04018000-01-201', desc: 'PR BEEF NY STRIPLOIN 0X1', pack: '5 PC 70# CS' },
+        { code: '02818001-14-201', desc: 'ABA BEEF DA NY STK CC BNLS', pack: '14 PC 12.25# CS' },
+        { code: '02012000-01-201', desc: 'ABA BEEF BRISKET', pack: '5 PC 60# CS' },
+        { code: '22012000-01-201', desc: 'CH UP 2/3 ANGUS BEEF BRISKET', pack: '4 PC 56# CS' },
+        { code: '02811202-12-201', desc: 'ABA BEEF DA RIBEYE STK BNLS', pack: '16 PC 12# CS' },
+        { code: '14040800-01-201', desc: 'PORK BELLY SKIN/ON', pack: '50# CS FRZ' },
+        { code: '11020407-26-201', desc: 'LAMB RACK FRENCHED 26/28', pack: '20 PC 35# CS FRZ' },
+        { code: '11020411-19-201', desc: 'LAMB RACK FRENCHED NZ 18/20', pack: '24 PC 28# CS FRZ' }
+      ]
+    },
+    tommy: {
+      custNum: '9001818', custName: 'Tommy Bahama Marlin Bar - La Cantera',
+      items: [
+        { code: '02113613-04-201', desc: 'ABA GROUND BEEF CHUCK', pack: '12# CS' },
+        { code: '02113005-06-201', desc: 'ABA BEEF DENVER STK STRIP', pack: '32 PC 12# CS' }
+      ]
+    }
+  };
+
+  function buildRows(items, tbody) {
+    tbody.innerHTML = '';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var tr = document.createElement('tr');
+      var noteHtml = item.note ? '<br><span style="font-size:8px;color:#555;">' + item.note + '</span>' : '';
+      tr.innerHTML =
+        '<td class="col-code">' + item.code + '</td>' +
+        '<td class="col-desc">' + item.desc + noteHtml + '</td>' +
+        '<td class="col-pack">' + (item.pack || '') + '</td>' +
+        '<td class="col-amt"><input type="text" class="amt-input order-amt" inputmode="numeric" pattern="[0-9]*"></td>' +
+        '<td class="col-req"><textarea></textarea></td>';
+      tbody.appendChild(tr);
+    }
+  }
+
+  function updateTotal() {
+    var inputs = document.querySelectorAll('.order-amt');
+    var total = 0;
+    for (var i = 0; i < inputs.length; i++) {
+      var v = parseInt(inputs[i].value, 10);
+      if (!isNaN(v)) total += v;
+    }
+    document.getElementById('totalCases').textContent = total > 0 ? total : '';
+  }
+
+  function loadAccount() {
+    var key = document.getElementById('accountSelect').value;
+    if (!key) { document.getElementById('form-area').classList.remove('visible'); return; }
+    var acct = accounts[key];
+    document.getElementById('custNum').textContent  = acct.custNum;
+    document.getElementById('custName').textContent = acct.custName;
+    document.getElementById('deliveryDate').value   = '';
+    document.getElementById('totalCases').textContent = '';
+    buildRows(acct.items, document.getElementById('regularItems'));
+    var inputs = document.querySelectorAll('.order-amt');
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].addEventListener('input', updateTotal);
+    }
+    document.getElementById('form-area').classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  window.onload = function() {
+    document.getElementById('accountSelect').addEventListener('change', loadAccount);
+  };
+})();
+</script>
+</body>
+</html>
